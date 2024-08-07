@@ -1,0 +1,52 @@
+# Reference: https://docs.sonarsource.com/sonarcloud/advanced-setup/ci-based-analysis/sonarcloud-extension-for-azure-devops/
+# Reference: https://docs.sonarsource.com/sonarcloud/advanced-setup/ci-based-analysis/sonarscanner-cli/
+# Reference: https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/ci-integration/overview/
+#   condition: eq(variables['Build.Reason'], 'PullRequest')  # Run this job only for PRs
+steps:
+  - checkout: self
+    fetchDepth: 0  # 0 Fetch the entire history of the repository, Set 1 for latest commit history
+
+  - task: SonarCloudPrepare@1
+    displayName: 'Prepare analysis on SonarCloud'
+    inputs:
+      SonarCloud: $(pipeline.SonarCloudServiceConnection)
+      organization: $(pipeline.SonarCloudOrganization)
+      scannerMode: $(pipeline.SonarScannerMode)
+      configMode: $(pipeline.SonarCloudConfigMode)
+      cliProjectKey: $(pipeline.SonarCloudProjectKey)
+      cliProjectName: $(pipeline.SonarCloudProjectName)
+      cliProjectVersion: $(Build.BuildID)
+      cliSources: $(pipeline.SonarCloudCliSources)
+      extraProperties: |
+        $(pipeline.SonarCloudPrepareExtraProperties) 
+        sonar.coverage.exclusions=**/*Test*.cs,**/Tests/**/*.cs   #Adjust based on your project's structure and exclusions
+    condition: succeeded() # Run this task only if previous tasks succeeded
+    continueOnError: false # Stop the pipeline if this task fails; subsequent tasks will not be executed
+    timeoutInMinutes: 15
+    enabled: true  # Set to false to disable this task
+
+  - task: SonarCloudAnalyze@1
+    displayName: 'SonarCloud Analysis'
+    inputs:
+      scannerMode: $(pipeline.SonarScannerMode)
+      additionalArguments: $(pipeline.SonarCloudadditionalArguments) # '-Dsonar.qualitygate.wait=true'  #Makes SonarCloud analysis wait for quality gate result.
+      jdkVersion: $(pipeline.SonarCloudjdkVersion)
+      # failBuildOnQualityGateFail: true # Set to true to fail the build if the quality gate fails
+    condition: succeeded()
+    continueOnError: false
+    timeoutInMinutes: 15
+    enabled: true
+
+  - task: SonarCloudPublish@1
+    displayName: 'Publish SonarCloud Analysis Results'
+    inputs:
+      pollingTimeoutSec: 300
+      publishReports: true
+    condition: always() # This ensures that the publish step runs even if previous steps fail, useful for debugging
+    continueOnError: false 
+
+  - script: echo "The Quality Gate passes"
+    displayName: ' Running Next Task'
+    condition: succeeded('SonarCloudAnalyze') 
+    continueOnError: false
+    enabled: true

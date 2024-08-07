@@ -1,0 +1,15 @@
+# Reference: https://learn.microsoft.com/en-us/azure/devops/pipelines/release/deploy-using-approvals?view=azure-devops
+# Reference: https://learn.microsoft.com/en-us/azure/devops/pipelines/release/deploy-using-approvals?view=azure-devops#set-up-manual-intervention
+steps:
+  - task: ManualValidation@0
+    displayName: 'Deployment Approval Required'
+    inputs:
+      instructions: 'Please review and approve this deployment to proceed.'
+      timeoutInMinutes: 120  
+      approvers: $(pipeline.approvers)
+      approvalOrder: $(pipeline.approvalOrder)
+      notificationEmails: 'approver1@example.com;approver2@example.com'
+      retryCount: 2 # Retries failed manual approval up to 2 times.
+    condition: succeeded() # Run this task only if previous tasks succeeded
+    continueOnError: false # Stop the pipeline if this task fails; subsequent tasks will not be executed  
+    enabled: true  # Set to false to disable this task

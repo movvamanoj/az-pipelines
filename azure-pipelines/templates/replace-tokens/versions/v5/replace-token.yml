@@ -1,0 +1,13 @@
+# Reference: https://github.com/qetza/replacetokens-task/tree/main/tasks/ReplaceTokensV5
+# In pipeline variables we need to give files like **/*.ts;**/*.json
+# Example files : variable name: targetFiles and value: **/*.ts;**/*.json
+steps:
+- task: qetza.replacetokens.replacetokens-task.replacetokens@5
+  displayName: Replace tokens in targetFile
+  inputs:
+    targetFiles: $(pipeline.targetFiles)
+    escapeType: $(pipeline.escapeType)
+    actionOnMissing: fail
+    condition: succeeded() # Run this task only if previous tasks succeeded
+    continueOnError: false # Stop the pipeline if this task fails; subsequent tasks will not be executed  
+    enabled: true  # Set to false to disable this task

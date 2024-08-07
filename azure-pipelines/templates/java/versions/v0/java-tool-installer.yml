@@ -1,0 +1,20 @@
+parameters:
+  - name: jdkArchitectureOption
+    type: string
+    default: 'x64'
+    
+  - name: jdkSourceOption
+    type: string
+    default: 'PreInstalled'
+
+steps:
+- task: JavaToolInstaller@0
+  displayName: 'Install Java $(pipeline.JavaVersionSpec)'
+  inputs:
+    versionSpec: $(pipeline.JavaVersionSpec) # pass java version '17'
+    jdkArchitectureOption: ${{ parameters.jdkArchitectureOption }}
+    jdkSourceOption: ${{ parameters.jdkSourceOption }}
+    condition: succeeded() # Run this task only if previous tasks succeeded
+    continueOnError: false # Stop the pipeline if this task fails; subsequent tasks will not be executed  
+    enabled: true  # Set to false to disable this task
+

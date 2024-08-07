@@ -1,0 +1,24 @@
+# Reference: https://learn.microsoft.com/en-us/azure/defender-for-cloud/azure-devops-extension
+# Reference: https://github.com/aquasecurity/trivy
+parameters:
+  - name: trivyimagename
+    type: string
+    default: '$(pipeline.azureContainerRegistry)/$(pipeline.RepositoryName):$(Build.BuildId)'
+
+steps:
+- script: |
+    sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+    wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+    echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+    if ! command -v trivy &> /dev/null; then
+      sudo apt-get update
+      sudo apt-get install -y trivy
+    else
+      echo "Trivy is already installed."
+    fi
+    trivy image ${{ parameters.trivyimagename }}
+    echo "Print image name: ${{ parameters.trivyimagename }}"
+  displayName: 'Scan Docker Image with Trivy'
+  condition: succeeded() # Run this task only if previous tasks succeeded
+  continueOnError: false # Stop the pipeline if this task fails; subsequent tasks will not be executed  
+  enabled: true  # Set to false to disable this task

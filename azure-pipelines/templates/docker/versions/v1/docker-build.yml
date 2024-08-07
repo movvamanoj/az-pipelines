@@ -1,0 +1,16 @@
+# Reference : https://learn.microsoft.com/en-us/azure/devops/pipelines/ecosystems/containers/acr-template?view=azure-devops
+steps:
+- task: Docker@1
+  displayName: 'Build Docker Image'
+  inputs:
+    azureSubscriptionEndpoint: $(pipeline.azureSubscriptionEndpoint)
+    azureContainerRegistry: $(pipeline.azureContainerRegistry)
+    command: build
+    dockerFile: $(pipeline.dockerFile)
+    buildContext: $(pipeline.buildContext)
+    imageName: $(Build.Repository.Name)
+    tags: |
+      $(Build.BuildId)
+    condition: succeeded() # Run this task only if previous tasks succeeded
+    continueOnError: false # Stop the pipeline if this task fails; subsequent tasks will not be executed  
+    enabled: true  # Set to false to disable this task

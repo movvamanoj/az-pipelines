@@ -1,0 +1,24 @@
+# we want to display the contents of multiple files, For that we use space betweeen each file name 
+# Example files : variable name: files and value: src/config1.ts src/config2.ts
+# -z Checks if a string is empty.
+# -f Checks if a file exists and is a regular file (not a directory, link, etc.).
+# -r Checks if the file exists and is readable. 
+steps:
+- script: |
+  if [ -z "$files" ]; then
+    echo "No files provided"
+    exit 1
+  fi
+
+  for file in $files; do
+    if [ -r "$file" ]; then
+      echo "Displaying contents of $file"
+      cat "$file"
+    else
+      echo "Error: Cannot read $file"
+    fi
+  done
+displayName: 'Display Contents of Files'
+condition: succeeded() # Run this task only if previous tasks succeeded
+continueOnError: false # Stop the pipeline if this task fails; subsequent tasks will not be executed  
+enabled: true  # Set to false to disable this task

@@ -1,0 +1,51 @@
+trigger:
+- support
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+- stage: Analysis
+  displayName: 'Code Analysis and Preparation'
+  condition: eq(variables['Build.Reason'], 'PullRequest')  # Run this stage only for PRs
+  jobs:
+  - job: SonarCloudAnalysis
+    displayName: 'SonarCloud Analysis'
+    steps:
+    - template: azure-pipelines/templates/java/versions/v0/java-tool-installer.yml@templates
+    - template: azure-pipelines/templates/sonarcloud/versions/v1/SonarCloud.yml@templates
+
+- stage: TokenReplacementAndCatFiles
+  displayName: 'Token Replacement and CAT Files'
+  dependsOn: Analysis
+  jobs:
+  - job: ReplaceTokens
+    displayName: 'Replace Tokens'
+    steps:
+    - template: azure-pipelines/templates/replace-tokens/versions/v5/replace-tokens.yml@templates
+
+  - job: CatFiles
+    displayName: 'CAT Files'
+    dependsOn: ReplaceTokens
+    steps:
+    - template: azure-pipelines/templates/cat-files/versions/v1/cat-files.yml@templates
+
+- stage: Security
+  displayName: 'WhiteSource Scan'
+  dependsOn: TokenReplacementAndCatFiles
+  jobs:
+  - job: WhiteSource
+    displayName: 'WhiteSource Scan'
+    steps:
+    - template: azure-pipelines/templates/wwhitesource/versions/v21/whitesource.yml@templates
+
+- stage: BuildAndScan
+  displayName: 'Build, Scan, and Push Docker Image'
+  dependsOn: Security
+  jobs:
+  - job: BuildScanPush
+    displayName: 'Build, Scan, and Push'
+    steps:
+    - template: azure-pipelines/templates/docker/versions/v1/docker-build.yml@templates
+    - template: azure-pipelines/templates/trivy-scan/versions/v1/trivy-scan.yml@templates
+    - template: azure-pipelines/templates/docker/versions/v1/docker-push.yml@templates

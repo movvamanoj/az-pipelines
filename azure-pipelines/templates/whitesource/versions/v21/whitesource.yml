@@ -1,0 +1,8 @@
+steps:
+- task: whitesource.whiteSource-bolt-v2.bolt.wss.WhiteSource@21
+  displayName: 'WhiteSource'
+  inputs:
+    projectName: $(Build.Repository.Name)
+    condition: succeeded() # Run this task only if previous tasks succeeded
+    continueOnError: false # Stop the pipeline if this task fails; subsequent tasks will not be executed  
+    enabled: true  # Set to false to disable this task
